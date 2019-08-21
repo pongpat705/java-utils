@@ -8,7 +8,6 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.Locale;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -18,9 +17,6 @@ import com.maoz.utils.annotations.StringDelimeterToList;
 public class ObjectConverter {
 
 	private final static String THREAD = Thread.currentThread().getId() + " " + Thread.currentThread().getName();
-	private final static SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss", Locale.ENGLISH);
-	private final static Date currentDate = new Date();
-	private final static String TIME = sdf.format(currentDate);
 
 	public ObjectConverter() {
 
@@ -35,8 +31,8 @@ public class ObjectConverter {
 
 			for (Field f : fields) {
 
-				System.out.println("["+TIME+"] ["+THREAD+"] tartget Field name" + f.getName());
-				System.out.println("["+TIME+"] ["+THREAD+"] tartget Field type" + f.getType());
+				System.out.println("["+new Date()+"] ["+THREAD+"] tartget Field name" + f.getName());
+				System.out.println("["+new Date()+"] ["+THREAD+"] tartget Field type" + f.getType());
 
 				for (Method m : source.getClass().getMethods()) {
 					if (m.getName().startsWith("get") && m.getName().length() == f.getName().length() + 3) {
@@ -51,7 +47,7 @@ public class ObjectConverter {
 									
 									String format = valueFormat.format();
 									
-									System.out.println("["+TIME+"] ["+THREAD+"] DateValueFormat " + format);
+									System.out.println("["+new Date()+"] ["+THREAD+"] DateValueFormat " + format);
 									
 									SimpleDateFormat sdf = new SimpleDateFormat(format);
 									String valueString = String.valueOf(value);
@@ -73,9 +69,9 @@ public class ObjectConverter {
 									String targetType = transFormTo.targetType();
 									String delimeter = transFormTo.delimeter();
 									
-									System.out.println("["+TIME+"] ["+THREAD+"] TransFormTo source " + sourceType);
-									System.out.println("["+TIME+"] ["+THREAD+"] TransFormTo target " + targetType);
-									System.out.println("["+TIME+"] ["+THREAD+"] TransFormTo delimeter " + delimeter);
+									System.out.println("["+new Date()+"] ["+THREAD+"] TransFormTo source " + sourceType);
+									System.out.println("["+new Date()+"] ["+THREAD+"] TransFormTo target " + targetType);
+									System.out.println("["+new Date()+"] ["+THREAD+"] TransFormTo delimeter " + delimeter);
 									
 									if(StringUtils.equals("java.lang.String", sourceType) && StringUtils.equals("java.util.List", targetType)) {
 										List<String> valueList = new ArrayList<String>();
@@ -92,7 +88,7 @@ public class ObjectConverter {
 								
 								
 								f.set(newObj, value);
-								System.out.println("["+TIME+"] ["+THREAD+"] Value " + value);
+								System.out.println("["+new Date()+"] ["+THREAD+"] Value " + value);
 							} catch (InvocationTargetException e) {
 								// TODO Auto-generated catch block
 								e.printStackTrace();
