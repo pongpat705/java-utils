@@ -34,69 +34,72 @@ public class ObjectConverter {
 				System.out.println("["+new Date()+"] ["+THREAD+"] tartget Field name" + f.getName());
 				System.out.println("["+new Date()+"] ["+THREAD+"] tartget Field type" + f.getType());
 
-				for (Method m : source.getClass().getMethods()) {
-					if (m.getName().startsWith("get") && m.getName().length() == f.getName().length() + 3) {
-						if (m.getName().toLowerCase().endsWith(f.getName().toLowerCase())) {
-							//setValue
-							f.setAccessible(true);
-							try {
-								Object value = m.invoke(source);
-								//valueFormat anno
-								DateValueFormat valueFormat = m.getAnnotation(DateValueFormat.class);
-								if(null != valueFormat) {
-									
-									String format = valueFormat.format();
-									
-									System.out.println("["+new Date()+"] ["+THREAD+"] DateValueFormat " + format);
-									
-									SimpleDateFormat sdf = new SimpleDateFormat(format);
-									String valueString = String.valueOf(value);
-									try {
-										Date dateObject = sdf.parse(valueString);
-										value = dateObject;
-									} catch (ParseException e) {
-										// TODO Auto-generated catch block
-										e.printStackTrace();
-									}
-									
-									
-									
-								} 
-								
-								StringDelimeterToList transFormTo = m.getAnnotation(StringDelimeterToList.class);
-								if(null != transFormTo) {
-									String sourceType = transFormTo.sourceType();
-									String targetType = transFormTo.targetType();
-									String delimeter = transFormTo.delimeter();
-									
-									System.out.println("["+new Date()+"] ["+THREAD+"] TransFormTo source " + sourceType);
-									System.out.println("["+new Date()+"] ["+THREAD+"] TransFormTo target " + targetType);
-									System.out.println("["+new Date()+"] ["+THREAD+"] TransFormTo delimeter " + delimeter);
-									
-									if(StringUtils.equals("java.lang.String", sourceType) && StringUtils.equals("java.util.List", targetType)) {
-										List<String> valueList = new ArrayList<String>();
-										String strValue = String.valueOf(value);
-										String[] splitedString = StringUtils.split(strValue, delimeter);
-										for (int i = 0; i < splitedString.length; i++) {
-											String s = splitedString[i];
-											valueList.add(s);
+				if(!"serialVersionUID".equals(f.getName())) {
+					for (Method m : source.getClass().getMethods()) {
+						if (m.getName().startsWith("get") && m.getName().length() == f.getName().length() + 3) {
+							if (m.getName().toLowerCase().endsWith(f.getName().toLowerCase())) {
+								//setValue
+								f.setAccessible(true);
+								try {
+									Object value = m.invoke(source);
+									//valueFormat anno
+									DateValueFormat valueFormat = m.getAnnotation(DateValueFormat.class);
+									if(null != valueFormat) {
+										
+										String format = valueFormat.format();
+										
+										System.out.println("["+new Date()+"] ["+THREAD+"] DateValueFormat " + format);
+										
+										SimpleDateFormat sdf = new SimpleDateFormat(format);
+										String valueString = String.valueOf(value);
+										try {
+											Date dateObject = sdf.parse(valueString);
+											value = dateObject;
+										} catch (ParseException e) {
+											// TODO Auto-generated catch block
+											e.printStackTrace();
 										}
-										value = valueList;
+										
+										
+										
+									} 
+									
+									StringDelimeterToList transFormTo = m.getAnnotation(StringDelimeterToList.class);
+									if(null != transFormTo) {
+										String sourceType = transFormTo.sourceType();
+										String targetType = transFormTo.targetType();
+										String delimeter = transFormTo.delimeter();
+										
+										System.out.println("["+new Date()+"] ["+THREAD+"] TransFormTo source " + sourceType);
+										System.out.println("["+new Date()+"] ["+THREAD+"] TransFormTo target " + targetType);
+										System.out.println("["+new Date()+"] ["+THREAD+"] TransFormTo delimeter " + delimeter);
+										
+										if(StringUtils.equals("java.lang.String", sourceType) && StringUtils.equals("java.util.List", targetType)) {
+											List<String> valueList = new ArrayList<String>();
+											String strValue = String.valueOf(value);
+											String[] splitedString = StringUtils.split(strValue, delimeter);
+											for (int i = 0; i < splitedString.length; i++) {
+												String s = splitedString[i];
+												valueList.add(s);
+											}
+											value = valueList;
+										}
+										
 									}
 									
+									
+									f.set(newObj, value);
+									System.out.println("["+new Date()+"] ["+THREAD+"] Value " + value);
+								} catch (InvocationTargetException e) {
+									// TODO Auto-generated catch block
+									e.printStackTrace();
 								}
-								
-								
-								f.set(newObj, value);
-								System.out.println("["+new Date()+"] ["+THREAD+"] Value " + value);
-							} catch (InvocationTargetException e) {
-								// TODO Auto-generated catch block
-								e.printStackTrace();
-							}
 
+							}
 						}
 					}
 				}
+				
 
 			}
 
