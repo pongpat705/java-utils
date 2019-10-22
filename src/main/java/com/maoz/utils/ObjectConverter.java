@@ -13,7 +13,11 @@ import org.apache.commons.lang3.StringUtils;
 
 import com.maoz.utils.annotations.DateValueFormat;
 import com.maoz.utils.annotations.StringDelimeterToList;
-
+/**
+ * @author  Pongpat Phokeed
+ * @version 1.0
+ * @since   2019/10/17
+ */
 public class ObjectConverter {
 
 	private final static String THREAD = Thread.currentThread().getId() + " " + Thread.currentThread().getName();
@@ -25,7 +29,7 @@ public class ObjectConverter {
 	public <T> T convertValue(Object source, Class<T> target) {
 		T newObj = null;
 		try {
-			newObj = target.newInstance();
+			newObj = target.getDeclaredConstructor().newInstance();
 
 			Field[] fields = newObj.getClass().getDeclaredFields();
 
@@ -114,6 +118,10 @@ public class ObjectConverter {
 			e.printStackTrace();
 		} catch (SecurityException e) {
 			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (NoSuchMethodException e) {
+			e.printStackTrace();
+		} catch (InvocationTargetException e) {
 			e.printStackTrace();
 		}
 

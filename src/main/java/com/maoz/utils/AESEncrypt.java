@@ -6,7 +6,11 @@ import javax.crypto.spec.SecretKeySpec;
 import static org.apache.commons.codec.binary.Base64.decodeBase64;
 import static org.apache.commons.codec.binary.Base64.encodeBase64;
 
-
+/**
+ * @author  Pongpat Phokeed
+ * @version 1.0
+ * @since   2019/10/17
+ */
 public class AESEncrypt {
 
 	private final static String alg = "AES";
