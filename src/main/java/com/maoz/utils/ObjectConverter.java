@@ -1,8 +1,11 @@
 package com.maoz.utils;
 
+import java.beans.PropertyEditor;
+import java.beans.PropertyEditorManager;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.math.BigDecimal;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -47,7 +50,10 @@ public class ObjectConverter {
 								try {
 									Object value = m.invoke(source);
 									//valueFormat anno
+									System.out.println("["+new Date()+"] ["+THREAD+"] target field Type " + f.getType().getName());
+									System.out.println("["+new Date()+"] ["+THREAD+"] source field Type " + m.getReturnType().getName());
 									DateValueFormat valueFormat = m.getAnnotation(DateValueFormat.class);
+									StringDelimeterToList transFormTo = m.getAnnotation(StringDelimeterToList.class);
 									if(null != valueFormat) {
 										
 										String format = valueFormat.format();
@@ -66,18 +72,15 @@ public class ObjectConverter {
 										
 										
 										
-									} 
-									
-									StringDelimeterToList transFormTo = m.getAnnotation(StringDelimeterToList.class);
-									if(null != transFormTo) {
+									} else if(null != transFormTo) {
 										String sourceType = transFormTo.sourceType();
 										String targetType = transFormTo.targetType();
 										String delimeter = transFormTo.delimeter();
-										
+
 										System.out.println("["+new Date()+"] ["+THREAD+"] TransFormTo source " + sourceType);
 										System.out.println("["+new Date()+"] ["+THREAD+"] TransFormTo target " + targetType);
 										System.out.println("["+new Date()+"] ["+THREAD+"] TransFormTo delimeter " + delimeter);
-										
+
 										if(StringUtils.equals("java.lang.String", sourceType) && StringUtils.equals("java.util.List", targetType)) {
 											List<String> valueList = new ArrayList<String>();
 											String strValue = String.valueOf(value);
@@ -88,13 +91,14 @@ public class ObjectConverter {
 											}
 											value = valueList;
 										}
-										
+
+									} else {
+										value = this.transformValue(m.getReturnType(), f.getType(), value);
 									}
-									
-									
+
 									f.set(newObj, value);
 									System.out.println("["+new Date()+"] ["+THREAD+"] Value " + value);
-								} catch (InvocationTargetException e) {
+								} catch (Exception e) {
 									// TODO Auto-generated catch block
 									e.printStackTrace();
 								}
@@ -107,25 +111,50 @@ public class ObjectConverter {
 
 			}
 
-		} catch (InstantiationException e) {
+		} catch (InstantiationException | NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
 			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IllegalAccessException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IllegalArgumentException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (SecurityException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (NoSuchMethodException e) {
-			e.printStackTrace();
-		} catch (InvocationTargetException e) {
 			e.printStackTrace();
 		}
 
 		return newObj;
+	}
+
+	private Object transformValue(Class sourceFieldType, Class targetFieldType, Object sourceValue){
+		Object result = null;
+		if(sourceFieldType == targetFieldType){
+			result = sourceValue;
+		} else {
+
+			if(sourceFieldType == String.class) {
+				String xValue = (String) sourceValue;
+
+				if(targetFieldType == Double.class) {
+					result = Double.parseDouble(xValue);
+				}
+				if(targetFieldType == Integer.class) {
+					result = Integer.parseInt(xValue);
+				}
+				if(targetFieldType == BigDecimal.class) {
+					result = new BigDecimal(xValue);
+				}
+			} else if(sourceFieldType == Double.class) {
+				Double xValue = (Double) sourceValue;
+
+				if(targetFieldType == Integer.class) {
+					result = Integer.parseInt(Double.toString(xValue));
+				}
+				if(targetFieldType == BigDecimal.class) {
+					result = new BigDecimal(xValue);
+				}
+				if(targetFieldType == String.class) {
+					result = xValue.toString();
+				}
+			} else {
+				result = sourceValue;
+			}
+
+		}
+		return result;
 	}
 
 }

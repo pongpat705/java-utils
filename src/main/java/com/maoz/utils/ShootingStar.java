@@ -133,9 +133,9 @@ public class ShootingStar {
             };
             Authenticator.setDefault(authenticator);
             //proxy
-            con = (HttpsURLConnection) url.openConnection();
+            con = (HttpURLConnection) url.openConnection();
         } else {
-            con = (HttpsURLConnection) url.openConnection();
+            con = (HttpURLConnection) url.openConnection();
         }
         con.setDoOutput(true);
 
