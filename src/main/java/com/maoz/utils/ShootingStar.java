@@ -150,9 +150,9 @@ public class ShootingStar {
      * @param headers  http headers to be config
      * @return response object data
      */
-    public <T> Object shootHttp (T object, String httpMethod, String url, Class<?> type, Map<String, String> headers){
+    public <T> T shootHttp (T object, String httpMethod, String url, Class<T> type, Map<String, String> headers) throws IllegalAccessException, InstantiationException {
 
-        Object t = null;
+        T t = type.newInstance();
         try {
             this.url = new URL(url);
             buildHttp();
@@ -204,9 +204,9 @@ public class ShootingStar {
      * @param headers  http headers to be config
      * @return response object data
      */
-    public <T> Object shootHttps (T object, String httpMethod, String url, Class<?> type, Map<String, String> headers){
+    public <T> T shootHttps (T object, String httpMethod, String url, Class<T> type, Map<String, String> headers) throws IllegalAccessException, InstantiationException {
 
-        Object t = null;
+        T t = type.newInstance();
         try {
             this.url = new URL(url);
             this.host = this.url.getHost();
