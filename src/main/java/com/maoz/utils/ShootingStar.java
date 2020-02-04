@@ -218,19 +218,19 @@ public class ShootingStar {
                 String reqBody = oMapper.writeValueAsString(object);
                 reqBody = new String(reqBody.getBytes(charset), charset);
 
-                OutputStream os = con.getOutputStream();
+                OutputStream os = cons.getOutputStream();
                 byte[] input = reqBody.getBytes(charset);
                 os.write(input);
             }
-
+            BufferedReader br = new BufferedReader(new InputStreamReader(cons.getInputStream(), charset));
+            StringBuilder response = new StringBuilder();
+            response.append(br.lines().collect(Collectors.joining()));
             if (HttpURLConnection.HTTP_OK != cons.getResponseCode()) {
                 log.info(" Service error ");
-            } else {
-
-                BufferedReader br = new BufferedReader(new InputStreamReader(cons.getInputStream(), charset));
-                StringBuilder response = new StringBuilder();
+                log.info(" Service error = "+ cons.getResponseCode());
                 response.append(br.lines().collect(Collectors.joining()));
-
+                log.info("response -> "+response.toString());
+            } else {
                 log.info(" Response Status : " + cons.getResponseCode());
                 log.info(" response body : " + response.toString());
 
