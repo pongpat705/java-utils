@@ -125,34 +125,47 @@ public class ObjectConverter {
 			result = sourceValue;
 		} else {
 
-			if(sourceFieldType == String.class) {
-				String xValue = (String) sourceValue;
+			if (null != sourceValue) {
+				if(sourceFieldType == String.class) {
+					String xValue = (String) sourceValue;
 
-				if(targetFieldType == Double.class) {
-					result = Double.parseDouble(xValue);
-				}
-				if(targetFieldType == Integer.class) {
-					result = Integer.parseInt(xValue);
-				}
-				if(targetFieldType == BigDecimal.class) {
-					result = new BigDecimal(xValue);
-				}
-			} else if(sourceFieldType == Double.class) {
-				Double xValue = (Double) sourceValue;
+					if(targetFieldType == Double.class) {
+						result = Double.parseDouble(xValue);
+					}
+					if(targetFieldType == Integer.class) {
+						result = Integer.parseInt(xValue);
+					}
+					if(targetFieldType == BigDecimal.class) {
+						result = new BigDecimal(xValue);
+					}
+				} else if(sourceFieldType == Double.class) {
+					Double xValue = (Double) sourceValue;
 
-				if(targetFieldType == Integer.class) {
-					result = Integer.parseInt(Double.toString(xValue));
+					if(targetFieldType == Integer.class) {
+						result = Integer.parseInt(Double.toString(xValue));
+					}
+					if(targetFieldType == BigDecimal.class) {
+						result = new BigDecimal(xValue);
+					}
+					if(targetFieldType == String.class) {
+						result = xValue.toString();
+					}
+				} else if(sourceFieldType == Integer.class) {
+					Integer xValue = (Integer) sourceValue;
+
+					if(targetFieldType == Double.class) {
+						result = Double.parseDouble(xValue.toString());
+					}
+					if(targetFieldType == BigDecimal.class) {
+						result = new BigDecimal(xValue);
+					}
+					if(targetFieldType == String.class) {
+						result = xValue.toString();
+					}
+				} else {
+					result = sourceValue;
 				}
-				if(targetFieldType == BigDecimal.class) {
-					result = new BigDecimal(xValue);
-				}
-				if(targetFieldType == String.class) {
-					result = xValue.toString();
-				}
-			} else {
-				result = sourceValue;
 			}
-
 		}
 		return result;
 	}
