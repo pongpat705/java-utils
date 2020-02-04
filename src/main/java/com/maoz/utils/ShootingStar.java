@@ -168,12 +168,14 @@ public class ShootingStar {
                 os.write(input);
             }
 
+            BufferedReader br = new BufferedReader(new InputStreamReader(con.getInputStream(), charset));
+            StringBuilder response = new StringBuilder();
             if (HttpURLConnection.HTTP_OK != con.getResponseCode()) {
-                log.info(" Service error ");
+                log.info(" Service error = "+ con.getResponseCode());
+                response.append(br.lines().collect(Collectors.joining()));
+                log.info("response -> "+response.toString());
             } else {
 
-                BufferedReader br = new BufferedReader(new InputStreamReader(con.getInputStream(), charset));
-                StringBuilder response = new StringBuilder();
                 response.append(br.lines().collect(Collectors.joining()));
 
                 log.info(" Response Status : " + con.getResponseCode());
