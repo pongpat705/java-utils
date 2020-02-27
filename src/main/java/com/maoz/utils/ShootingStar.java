@@ -98,7 +98,7 @@ public class ShootingStar {
             };
             Authenticator.setDefault(authenticator);
             //proxy
-            cons = (HttpsURLConnection) url.openConnection();
+            cons = (HttpsURLConnection) url.openConnection(proxy);
         } else {
             cons = (HttpsURLConnection) url.openConnection();
         }
@@ -133,7 +133,7 @@ public class ShootingStar {
             };
             Authenticator.setDefault(authenticator);
             //proxy
-            con = (HttpURLConnection) url.openConnection();
+            con = (HttpURLConnection) url.openConnection(proxy);
         } else {
             con = (HttpURLConnection) url.openConnection();
         }
