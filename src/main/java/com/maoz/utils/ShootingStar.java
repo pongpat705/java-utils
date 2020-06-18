@@ -7,16 +7,16 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 import org.apache.commons.codec.Charsets;
 
-import javax.net.ssl.HostnameVerifier;
-import javax.net.ssl.HttpsURLConnection;
-import javax.net.ssl.SSLSession;
-import javax.net.ssl.SSLSocketFactory;
+import javax.net.ssl.*;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.*;
 import java.nio.charset.Charset;
+import java.security.SecureRandom;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
 import java.util.Map;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -113,6 +113,60 @@ public class ShootingStar {
 
     }
 
+    private void buildHttpsIgnore() throws Exception {
+
+        if(isEscapeNonAscii){
+            JsonWriteFeature jsonWriteFeature = JsonWriteFeature.ESCAPE_NON_ASCII;
+            oMapper.configure(jsonWriteFeature.mappedFeature(), true);
+        }
+
+        oMapper.setPropertyNamingStrategy(propertyNamingStrategy);
+
+        if (hasProxy){
+            Proxy proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(proxyHost, proxyPort));
+
+            Authenticator authenticator = new Authenticator() {
+                public PasswordAuthentication getPasswordAuthentication() {
+                    return (new PasswordAuthentication(proxyUser,
+                            proxyPass.toCharArray()));
+                }
+            };
+            Authenticator.setDefault(authenticator);
+            //proxy
+            cons = (HttpsURLConnection) url.openConnection(proxy);
+        } else {
+            cons = (HttpsURLConnection) url.openConnection();
+        }
+        cons.setDoOutput(true);
+        SSLContext ctx = SSLContext.getInstance("TLS");
+        ctx.init(new KeyManager[0], new TrustManager[] {new X509TrustManager() {
+            @Override
+            public void checkClientTrusted(X509Certificate[] x509Certificates, String s) throws CertificateException {
+
+            }
+
+            @Override
+            public void checkServerTrusted(X509Certificate[] x509Certificates, String s) throws CertificateException {
+
+            }
+
+            @Override
+            public X509Certificate[] getAcceptedIssuers() {
+                return null;
+            }
+        }}, new SecureRandom());
+        SSLContext.setDefault(ctx);
+
+        cons.setSSLSocketFactory((SSLSocketFactory) SSLSocketFactory.getDefault());
+        cons.setHostnameVerifier(new HostnameVerifier() {
+            @Override
+            public boolean verify(String s, SSLSession sslSession) {
+                return true;
+            }
+        });
+
+    }
+
     private void buildHttp() throws Exception {
 
         if(isEscapeNonAscii){
@@ -150,7 +204,7 @@ public class ShootingStar {
      * @param headers  http headers to be config
      * @return response object data
      */
-    public <T> Object shootHttp (T object, String httpMethod, String url, Class<T> type, Map<String, String> headers) throws IllegalAccessException, InstantiationException {
+    public <T> T shootHttp (Object object, String httpMethod, String url, Class<T> type, Map<String, String> headers) throws IllegalAccessException, InstantiationException {
 
         Object t = null;
         try {
@@ -192,7 +246,7 @@ public class ShootingStar {
             e.printStackTrace();
         }
 
-        return t;
+        return (T) t;
     }
 
     /**
@@ -204,7 +258,7 @@ public class ShootingStar {
      * @param headers  http headers to be config
      * @return response object data
      */
-    public <T> Object shootHttps (T object, String httpMethod, String url, Class<T> type, Map<String, String> headers) {
+    public <T> T shootHttps (Object object, String httpMethod, String url, Class<T> type, Map<String, String> headers) {
 
         Object t = null;
         try {
@@ -245,8 +299,51 @@ public class ShootingStar {
             e.printStackTrace();
         }
 
-        return t;
+        return (T) t;
     }
 
+    public <T> T shootHttpsIgnore (Object object, String httpMethod, String url, Class<T> type, Map<String, String> headers) {
+
+        Object t = null;
+        try {
+            this.url = new URL(url);
+            this.host = this.url.getHost();
+            buildHttpsIgnore();
+
+            cons.setRequestMethod(httpMethod);
+            headers.keySet().forEach(key -> cons.setRequestProperty(key, headers.get(key)));
+            if("POST".equals(httpMethod)){
+                String reqBody = oMapper.writeValueAsString(object);
+                reqBody = new String(reqBody.getBytes(charset), charset);
+
+                OutputStream os = cons.getOutputStream();
+                byte[] input = reqBody.getBytes(charset);
+                os.write(input);
+            }
+            BufferedReader br = new BufferedReader(new InputStreamReader(cons.getInputStream(), charset));
+            StringBuilder response = new StringBuilder();
+            response.append(br.lines().collect(Collectors.joining()));
+            if (HttpURLConnection.HTTP_OK != cons.getResponseCode()) {
+                log.info(" Service error ");
+                log.info(" Service error = "+ cons.getResponseCode());
+                response.append(br.lines().collect(Collectors.joining()));
+                log.info("response -> "+response.toString());
+            } else {
+                log.info(" Response Status : " + cons.getResponseCode());
+                log.info(" response body : " + response.toString());
+
+                t = oMapper.readValue(response.toString(), type);
+            }
+
+        } catch (ProtocolException | JsonProcessingException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return (T) t;
+    }
 
 }
