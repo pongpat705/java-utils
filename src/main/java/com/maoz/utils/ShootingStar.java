@@ -8,10 +8,7 @@ import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 import org.apache.commons.codec.Charsets;
 
 import javax.net.ssl.*;
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
+import java.io.*;
 import java.net.*;
 import java.nio.charset.Charset;
 import java.security.SecureRandom;
@@ -167,6 +164,60 @@ public class ShootingStar {
 
     }
 
+    private void buildHttpsIgnore12() throws Exception {
+
+        if(isEscapeNonAscii){
+            JsonWriteFeature jsonWriteFeature = JsonWriteFeature.ESCAPE_NON_ASCII;
+            oMapper.configure(jsonWriteFeature.mappedFeature(), true);
+        }
+
+        oMapper.setPropertyNamingStrategy(propertyNamingStrategy);
+
+        if (hasProxy){
+            Proxy proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(proxyHost, proxyPort));
+
+            Authenticator authenticator = new Authenticator() {
+                public PasswordAuthentication getPasswordAuthentication() {
+                    return (new PasswordAuthentication(proxyUser,
+                            proxyPass.toCharArray()));
+                }
+            };
+            Authenticator.setDefault(authenticator);
+            //proxy
+            cons = (HttpsURLConnection) url.openConnection(proxy);
+        } else {
+            cons = (HttpsURLConnection) url.openConnection();
+        }
+        SSLContext ctx = SSLContext.getInstance("TLSv1.2");
+        ctx.init(new KeyManager[0], new TrustManager[] {new X509TrustManager() {
+            @Override
+            public void checkClientTrusted(X509Certificate[] x509Certificates, String s) throws CertificateException {
+
+            }
+
+            @Override
+            public void checkServerTrusted(X509Certificate[] x509Certificates, String s) throws CertificateException {
+
+            }
+
+            @Override
+            public X509Certificate[] getAcceptedIssuers() {
+                return null;
+            }
+        }}, new SecureRandom());
+        SSLContext.setDefault(ctx);
+
+        cons.setSSLSocketFactory((SSLSocketFactory) SSLSocketFactory.getDefault());
+        cons.setDoOutput(true);
+        cons.setHostnameVerifier(new HostnameVerifier() {
+            @Override
+            public boolean verify(String s, SSLSession sslSession) {
+                return true;
+            }
+        });
+
+    }
+
     private void buildHttp() throws Exception {
 
         if(isEscapeNonAscii){
@@ -213,17 +264,19 @@ public class ShootingStar {
 
             con.setRequestMethod(httpMethod);
             headers.keySet().forEach(key -> con.setRequestProperty(key, headers.get(key)));
-            if("POST".equals(httpMethod)){
+            if("POST".equals(con.getRequestMethod())){
                 String reqBody = oMapper.writeValueAsString(object);
                 log.info("reqBOdy "+ reqBody);
                 reqBody = new String(reqBody.getBytes(charset), charset);
+                byte[] input = reqBody.getBytes(charset);
+                con.setRequestProperty("Content-Length", String.valueOf(input.length));
 
                 OutputStream os = con.getOutputStream();
-                byte[] input = reqBody.getBytes(charset);
                 os.write(input);
             }
-
-            BufferedReader br = new BufferedReader(new InputStreamReader(con.getInputStream(), charset));
+            InputStream ips = con.getInputStream();
+            InputStreamReader ipsR = new InputStreamReader(ips, charset);
+            BufferedReader br = new BufferedReader(ipsR);
             StringBuilder response = new StringBuilder();
             if (HttpURLConnection.HTTP_OK != con.getResponseCode()) {
                 log.info(" Service error = "+ con.getResponseCode());
@@ -269,16 +322,19 @@ public class ShootingStar {
 
             cons.setRequestMethod(httpMethod);
             headers.keySet().forEach(key -> cons.setRequestProperty(key, headers.get(key)));
-            if("POST".equals(httpMethod)){
+            if("POST".equals(cons.getRequestMethod())){
                 String reqBody = oMapper.writeValueAsString(object);
                 log.info("reqBody "+ reqBody);
                 reqBody = new String(reqBody.getBytes(charset), charset);
+                byte[] input = reqBody.getBytes(charset);
+                cons.setRequestProperty("Content-Length", String.valueOf(input.length));
 
                 OutputStream os = cons.getOutputStream();
-                byte[] input = reqBody.getBytes(charset);
                 os.write(input);
             }
-            BufferedReader br = new BufferedReader(new InputStreamReader(cons.getInputStream(), charset));
+            InputStream ips = cons.getInputStream();
+            InputStreamReader ipsR = new InputStreamReader(ips, charset);
+            BufferedReader br = new BufferedReader(ipsR);
             StringBuilder response = new StringBuilder();
             log.info("response "+ response.toString());
             if (HttpURLConnection.HTTP_OK != cons.getResponseCode()) {
@@ -287,6 +343,7 @@ public class ShootingStar {
                 response.append(br.lines().collect(Collectors.joining()));
                 log.info("response -> "+response.toString());
             } else {
+                response.append(br.lines().collect(Collectors.joining()));
                 log.info(" Response Status : " + cons.getResponseCode());
                 log.info(" response body : " + response.toString());
 
@@ -314,16 +371,19 @@ public class ShootingStar {
 
             cons.setRequestMethod(httpMethod);
             headers.keySet().forEach(key -> cons.setRequestProperty(key, headers.get(key)));
-            if("POST".equals(httpMethod)){
+            if("POST".equals(cons.getRequestMethod())){
                 String reqBody = oMapper.writeValueAsString(object);
                 log.info("reqBody "+ reqBody);
                 reqBody = new String(reqBody.getBytes(charset), charset);
+                byte[] input = reqBody.getBytes(charset);
+                cons.setRequestProperty("Content-Length", String.valueOf(input.length));
 
                 OutputStream os = cons.getOutputStream();
-                byte[] input = reqBody.getBytes(charset);
                 os.write(input);
             }
-            BufferedReader br = new BufferedReader(new InputStreamReader(cons.getInputStream(), charset));
+            InputStream ips = cons.getInputStream();
+            InputStreamReader ipsR = new InputStreamReader(ips, charset);
+            BufferedReader br = new BufferedReader(ipsR);
             StringBuilder response = new StringBuilder();
             log.info("response "+ response.toString());
             if (HttpURLConnection.HTTP_OK != cons.getResponseCode()) {
@@ -332,6 +392,57 @@ public class ShootingStar {
                 response.append(br.lines().collect(Collectors.joining()));
                 log.info("response -> "+response.toString());
             } else {
+                response.append(br.lines().collect(Collectors.joining()));
+                log.info(" Response Status : " + cons.getResponseCode());
+                log.info(" response body : " + response.toString());
+
+                t = oMapper.readValue(response.toString(), type);
+            }
+
+        } catch (ProtocolException | JsonProcessingException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return (T) t;
+    }
+
+    public <T> T shootHttpsIgnore12 (Object object, String httpMethod, String url, Class<T> type, Map<String, String> headers) {
+
+        Object t = null;
+        try {
+            this.url = new URL(url);
+            this.host = this.url.getHost();
+            buildHttpsIgnore12();
+
+            cons.setRequestMethod(httpMethod);
+            headers.keySet().forEach(key -> cons.setRequestProperty(key, headers.get(key)));
+            if("POST".equals(cons.getRequestMethod())){
+                String reqBody = oMapper.writeValueAsString(object);
+                log.info("reqBody "+ reqBody);
+                reqBody = new String(reqBody.getBytes(charset), charset);
+                byte[] input = reqBody.getBytes(charset);
+                cons.setRequestProperty("Content-Length", String.valueOf(input.length));
+
+                OutputStream os = cons.getOutputStream();
+
+                os.write(input);
+            }
+            InputStream ips = cons.getInputStream();
+            InputStreamReader ipsR = new InputStreamReader(ips, charset);
+            BufferedReader br = new BufferedReader(ipsR);
+            StringBuilder response = new StringBuilder();
+            log.info("response "+ response.toString());
+            if (HttpURLConnection.HTTP_OK != cons.getResponseCode()) {
+                log.info(" Service error ");
+                log.info(" Service error = "+ cons.getResponseCode());
+                response.append(br.lines().collect(Collectors.joining()));
+                log.info("response -> "+response.toString());
+            } else {
+                response.append(br.lines().collect(Collectors.joining()));
                 log.info(" Response Status : " + cons.getResponseCode());
                 log.info(" response body : " + response.toString());
 
