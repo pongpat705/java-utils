@@ -215,6 +215,7 @@ public class ShootingStar {
             headers.keySet().forEach(key -> con.setRequestProperty(key, headers.get(key)));
             if("POST".equals(httpMethod)){
                 String reqBody = oMapper.writeValueAsString(object);
+                log.info("reqBOdy "+ reqBody);
                 reqBody = new String(reqBody.getBytes(charset), charset);
 
                 OutputStream os = con.getOutputStream();
@@ -270,6 +271,7 @@ public class ShootingStar {
             headers.keySet().forEach(key -> cons.setRequestProperty(key, headers.get(key)));
             if("POST".equals(httpMethod)){
                 String reqBody = oMapper.writeValueAsString(object);
+                log.info("reqBody "+ reqBody);
                 reqBody = new String(reqBody.getBytes(charset), charset);
 
                 OutputStream os = cons.getOutputStream();
@@ -278,7 +280,7 @@ public class ShootingStar {
             }
             BufferedReader br = new BufferedReader(new InputStreamReader(cons.getInputStream(), charset));
             StringBuilder response = new StringBuilder();
-            response.append(br.lines().collect(Collectors.joining()));
+            log.info("response "+ response.toString());
             if (HttpURLConnection.HTTP_OK != cons.getResponseCode()) {
                 log.info(" Service error ");
                 log.info(" Service error = "+ cons.getResponseCode());
@@ -314,6 +316,7 @@ public class ShootingStar {
             headers.keySet().forEach(key -> cons.setRequestProperty(key, headers.get(key)));
             if("POST".equals(httpMethod)){
                 String reqBody = oMapper.writeValueAsString(object);
+                log.info("reqBody "+ reqBody);
                 reqBody = new String(reqBody.getBytes(charset), charset);
 
                 OutputStream os = cons.getOutputStream();
@@ -322,7 +325,7 @@ public class ShootingStar {
             }
             BufferedReader br = new BufferedReader(new InputStreamReader(cons.getInputStream(), charset));
             StringBuilder response = new StringBuilder();
-            response.append(br.lines().collect(Collectors.joining()));
+            log.info("response "+ response.toString());
             if (HttpURLConnection.HTTP_OK != cons.getResponseCode()) {
                 log.info(" Service error ");
                 log.info(" Service error = "+ cons.getResponseCode());
